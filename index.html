@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OGS AI Besogo Bridge</title>
+    <link rel="stylesheet" href="besogo/css/besogo.css">
+    <link rel="stylesheet" href="besogo/css/board-wood.css" id="theme">
+    <style>
+        :root {
+            --bg: #0f1115;
+            --panel: #171b22;
+            --accent: #4fd1c5;
+            --muted: #9ba3b4;
+            --text: #e8eaed;
+            --board-height: calc(100vh - 180px);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(120deg, #0f1115 0%, #10131a 50%, #0d0f14 100%);
+            color: var(--text);
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+        header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #1f2530;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 18px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 0.02em;
+        }
+        .center-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 18px 24px 32px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+            gap: 18px;
+            align-items: stretch;
+        }
+        @media (max-width: 1100px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid #1f2530;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+        }
+        .board-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: fit-content;
+            max-width: 100%;
+        }
+        .analyzer-panel {
+            min-height: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-self: stretch;
+        }
+        .board-wrap {
+            height: var(--board-height);
+            min-height: 520px;
+            aspect-ratio: 552 / 625;
+            width: min(100%, calc(var(--board-height) * 552 / 625));
+            flex: 1 1 auto;
+        }
+        @media (max-width: 900px) {
+            .board-wrap {
+                width: 100%;
+                height: min(var(--board-height), calc(100vw * 625 / 552));
+                min-height: 0;
+            }
+            .analyzer-panel {
+                height: auto;
+            }
+        }
+        .board-wrap .besogo-viewer {
+            height: 100% !important;
+            width: 100% !important;
+        }
+        .board-wrap .besogo-container {
+            height: 100%;
+        }
+        .board-wrap .besogo-board {
+            height: 100%;
+        }
+        .panel h2 {
+            margin: 0 0 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        input, textarea, button {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #273040;
+            background: #0f1115;
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 64px;
+            max-height: 160px;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            background: var(--accent);
+            color: #0b0d12;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+            box-shadow: 0 10px 30px rgba(79, 209, 197, 0.25);
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 12px 34px rgba(79, 209, 197, 0.32); }
+        button:active { transform: translateY(0); opacity: 0.9; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+        .score-panel {
+            display: grid;
+            gap: 6px;
+            font-size: 12px;
+        }
+        .score-note {
+            font-size: 10px;
+            color: var(--muted);
+        }
+        .score-line {
+            display: flex;
+            justify-content: space-between;
+            color: var(--muted);
+        }
+        .score-line span {
+            color: var(--text);
+            font-weight: 600;
+        }
+        #log { display: none; }
+        .quality-table {
+            display: grid;
+            gap: 12px;
+        }
+        .quality-section {
+            border: 1px solid #273040;
+            border-radius: 10px;
+            padding: 10px;
+            display: grid;
+            gap: 8px;
+            background: #0f1115;
+        }
+        .quality-threshold {
+            font-size: 12px;
+            color: var(--text);
+        }
+        .quality-line {
+            display: grid;
+            grid-template-columns: 56px 1fr 64px;
+            gap: 10px;
+            align-items: center;
+        }
+        .quality-side {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .quality-bar {
+            height: 12px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: #0b0d12;
+            border: 1px solid #273040;
+        }
+        .quality-fill {
+            height: 100%;
+        }
+        .quality-count {
+            font-size: 11px;
+            color: var(--muted);
+            text-align: right;
+        }
+    </style>
+    <script src="besogo/js/besogo.js"></script>
+    <script src="besogo/js/editor.js"></script>
+    <script src="besogo/js/gameRoot.js"></script>
+    <script src="besogo/js/svgUtil.js"></script>
+    <script src="besogo/js/parseSgf.js"></script>
+    <script src="besogo/js/loadSgf.js"></script>
+    <script src="besogo/js/saveSgf.js"></script>
+    <script src="besogo/js/boardDisplay.js"></script>
+    <script src="besogo/js/coord.js"></script>
+    <script src="besogo/js/toolPanel.js"></script>
+    <script src="besogo/js/controlPanel.js"></script>
+    <script src="besogo/js/commentPanel.js"></script>
+    <script src="besogo/js/treePanel.js"></script>
+    <script src="besogo/js/filePanel.js"></script>
+    <script src="besogo/js/namesPanel.js"></script>
+</head>
+<body onload="besogo.autoInit()">
+    <header>
+        <h1>OGS Analyzer</h1>
+        <div style="color: var(--muted); font-size: 13px;">Paste an OGS game URL. We’ll pull review info and stream moves.</div>
+    </header>
+    <div class="center-wrap">
+    <main class="container">
+        <section class="panel board-panel">
+            <h2>Board</h2>
+            <div class="board-wrap">
+                <div
+                    class="besogo-viewer"
+                    resize="fixed"
+                    panels="control+names"
+                    sgf="https://raw.githubusercontent.com/gogameguru/commented-go-games/master/2016/05/20160309-Lee-Sedol-vs-AlphaGo-Commentary-An-Younggil.sgf"
+                ></div>
+            </div>
+        </section>
+        <section class="panel analyzer-panel">
+            <div>
+                <h2>Connection</h2>
+                <div class="form-grid">
+                    <div>
+                        <label for="gameUrl">OGS Game URL</label>
+                        <input id="gameUrl" placeholder="https://online-go.com/game/80686176">
+                    </div>
+                    <div class="row">
+                        <button id="connect">Analyze</button>
+                    </div>
+                </div>
+                <div id="log"></div>
+            </div>
+            <div>
+                <h2>Current</h2>
+                <div class="score-panel">
+                    <div class="score-note">Black's </div>
+                    <div class="score-line">Score: <span id="currentScore">--</span></div>
+                    <div class="score-line">Winrate: <span id="currentWinrate">--</span></div>
+                </div>
+            </div>
+            <div>
+                <h2>Move Quality</h2>
+                    <div class="quality-table" id="qualityTable">
+                        <div id="qualityRows"></div>
+                    </div>
+            </div>
+        </section>
+    </main>
+    </div>
+    <script src="index.js" type="module"></script>
+</body>
+</html>
