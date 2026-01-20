@@ -55,7 +55,7 @@ export function renderAnalysisReport(elements, aggregate) {
         return `
             <div class="phase-section">
                 <div class="phase-title">--- ${title} ---</div>
-                ${renderMetricRow(blackPhase, whitePhase, 'Accuracy', 'accuracy', '%', 100)}
+                ${renderMetricRow(blackPhase, whitePhase, 'Accuracy (<0.5)', 'accuracy', '%', 100, 'Accuracy = % of moves with score loss <= 0.5')}
                 ${renderMetricRow(blackPhase, whitePhase, 'AvgScoreLoss', 'avgLoss', '', 12)}
                 ${renderMetricRow(blackPhase, whitePhase, 'AvgWinLoss', 'avgWinLoss', '%', 50)}
                 <div class="mistake-row">
@@ -70,7 +70,7 @@ export function renderAnalysisReport(elements, aggregate) {
     renderDistribution(elements.winrateDistribution, WINRATE_BUCKETS, aggregate.black?.phases?.total, aggregate.white?.phases?.total, false, 'winrate');
 }
 
-function renderMetricRow(blackPhase, whitePhase, label, key, suffix, maxValue) {
+function renderMetricRow(blackPhase, whitePhase, label, key, suffix, maxValue, tooltip = '') {
     const blackValue = key ? (blackPhase?.[key] ?? 0) : 0;
     const whiteValue = key ? (whitePhase?.[key] ?? 0) : 0;
     const blackPct = maxValue ? Math.min(100, (blackValue / maxValue) * 100) : 0;
@@ -81,7 +81,7 @@ function renderMetricRow(blackPhase, whitePhase, label, key, suffix, maxValue) {
                 <div class="metric-value">${blackValue}${suffix}</div>
             </div>
             <div class="metric-center">
-                <div class="metric-label">${label}</div>
+                <div class="metric-label" ${tooltip ? `title="${tooltip}"` : ''}>${label}</div>
                 <div class="metric-bar-split">
                     <div class="metric-half left"><div class="metric-fill" style="width:${blackPct}%"></div></div>
                     <div class="metric-half right"><div class="metric-fill" style="width:${whitePct}%"></div></div>
