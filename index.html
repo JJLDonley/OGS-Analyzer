@@ -3,218 +3,607 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OGS AI Besogo Bridge</title>
+    <title>OGS Player Profile Analyzer</title>
     <link rel="stylesheet" href="besogo/css/besogo.css">
     <link rel="stylesheet" href="besogo/css/board-wood.css" id="theme">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600&display=swap');
+
         :root {
-            --bg: #0f1115;
-            --panel: #171b22;
-            --accent: #4fd1c5;
-            --muted: #9ba3b4;
-            --text: #e8eaed;
-            --board-height: calc(100vh - 180px);
+            --bg: #0c0f14;
+            --panel: #141a22;
+            --panel-strong: #1c2430;
+            --accent: #f4b860;
+            --accent-strong: #f08d34;
+            --muted: #9aa4b2;
+            --text: #f0f3f7;
+            --border: #253041;
+            --success: #5ad1a4;
+            --danger: #f17676;
+            --board-height: min(80vh, 760px);
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: linear-gradient(120deg, #0f1115 0%, #10131a 50%, #0d0f14 100%);
-            color: var(--text);
-            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
             min-height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr;
+            color: var(--text);
+            font-family: "IBM Plex Sans", sans-serif;
+            background:
+                radial-gradient(circle at 10% 10%, rgba(244, 184, 96, 0.12), transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(79, 209, 197, 0.12), transparent 45%),
+                linear-gradient(135deg, #0b0d11 0%, #111824 50%, #0b0f15 100%);
+        }
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
         }
         header {
-            padding: 16px 24px;
-            border-bottom: 1px solid #1f2530;
+            padding: 24px clamp(20px, 4vw, 48px);
+            display: grid;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(12, 16, 22, 0.8);
+            backdrop-filter: blur(10px);
+            justify-items: start;
+        }
+        .viewer-main {
+            min-height: calc(100vh - 56px);
+            padding: 16px clamp(16px, 3vw, 32px) 24px;
             display: flex;
-            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .viewer-full {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .viewer-fill {
+            flex: 1 1 auto;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .viewer-header-compact {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px 18px;
+            padding: 12px clamp(16px, 3vw, 32px);
+            gap: 12px;
+        }
+        .viewer-header-compact button {
+            width: auto;
+            min-width: 0;
+        }
+        .viewer-title {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 18px;
+            letter-spacing: 0.04em;
+        }
+        .title-block {
+            display: grid;
+            gap: 6px;
+        }
+        .eyebrow {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--muted);
         }
         h1 {
             margin: 0;
-            font-size: 20px;
-            letter-spacing: 0.02em;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(24px, 3vw, 36px);
         }
-        .center-wrap {
-            display: flex;
-            justify-content: center;
-            padding: 18px 24px 32px;
-        }
-        .container {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-            gap: 18px;
-            align-items: stretch;
-        }
-        @media (max-width: 1100px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
-        .panel {
-            background: var(--panel);
-            border: 1px solid #1f2530;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.35);
-        }
-        .board-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: fit-content;
-            max-width: 100%;
-        }
-        .analyzer-panel {
-            min-height: 520px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            align-self: stretch;
-        }
-        .board-wrap {
-            height: var(--board-height);
-            min-height: 520px;
-            aspect-ratio: 552 / 625;
-            width: min(100%, calc(var(--board-height) * 552 / 625));
-            flex: 1 1 auto;
-        }
-        @media (max-width: 900px) {
-            .board-wrap {
-                width: 100%;
-                height: min(var(--board-height), calc(100vw * 625 / 552));
-                min-height: 0;
-            }
-            .analyzer-panel {
-                height: auto;
-            }
-        }
-        .board-wrap .besogo-viewer {
-            height: 100% !important;
-            width: 100% !important;
-        }
-        .board-wrap .besogo-container {
-            height: 100%;
-        }
-        .board-wrap .besogo-board {
-            height: 100%;
-        }
-        .panel h2 {
-            margin: 0 0 12px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+        .subtitle {
             color: var(--muted);
+            font-size: 14px;
+            max-width: 720px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px 16px;
+            align-items: end;
+        }
+        .profile-controls {
+            width: 100%;
+        }
+        .profile-controls button {
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
+        }
+        .profile-controls input {
+            width: auto;
+            min-width: 220px;
+            max-width: 320px;
+        }
+        .profile-controls .checkbox-row {
+            width: 200px;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            padding: 6px 8px;
+        }
+        .profile-controls .checkbox-row label {
+            width: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            justify-content: flex-start;
+            flex: 0 0 100px;
+        }
+        .profile-controls .checkbox-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            margin: 0;
+            max-width: 16px;
+            min-width: 16px;
+            flex: 0 0 16px;
+            appearance: auto;
         }
         label {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.12em;
             color: var(--muted);
             margin-bottom: 6px;
         }
-        input, textarea, button {
+        input, button, select {
             width: 100%;
-            border-radius: 10px;
-            border: 1px solid #273040;
-            background: #0f1115;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--panel);
             color: var(--text);
             padding: 10px 12px;
             font-size: 14px;
+            font-family: "IBM Plex Sans", sans-serif;
         }
-        textarea {
-            resize: vertical;
-            min-height: 64px;
-            max-height: 160px;
+        .control-row {
+            display: grid;
+            gap: 10px;
+        }
+        .profile-controls .control-row {
+            justify-items: start;
+        }
+        .checkbox-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        .checkbox-row input {
+            width: auto;
+            margin-right: 6px;
         }
         button {
             cursor: pointer;
+            background: linear-gradient(140deg, var(--accent), var(--accent-strong));
             border: none;
-            background: var(--accent);
-            color: #0b0d12;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-            box-shadow: 0 10px 30px rgba(79, 209, 197, 0.25);
+            color: #1c1306;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 12px 30px rgba(244, 184, 96, 0.2);
         }
-        button:hover { transform: translateY(-1px); box-shadow: 0 12px 34px rgba(79, 209, 197, 0.32); }
-        button:active { transform: translateY(0); opacity: 0.9; }
-        .form-grid {
+        button.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            box-shadow: none;
+        }
+        .control-row.compact input {
+            max-width: 280px;
+        }
+        .control-row.compact button {
+            width: auto;
+            padding: 8px 14px;
+        }
+        button.small {
+            padding: 8px 10px;
+            font-size: 12px;
+            border-radius: 10px;
+            box-shadow: none;
+        }
+        button:hover { transform: translateY(-1px); }
+        main {
+            padding: 24px clamp(20px, 4vw, 48px) 48px;
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        }
+        .panel h2 {
+            margin: 0 0 12px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--muted);
+        }
+        .analysis-summary {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .analysis-summary strong {
+            color: var(--text);
+            font-size: 15px;
+        }
+        .phase-section {
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .phase-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+        .metric-row {
+            display: grid;
+            grid-template-columns: 120px minmax(200px, 1fr) 120px;
+            gap: 12px;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(37, 48, 65, 0.6);
+        }
+        .metric-side {
+            display: grid;
+            gap: 6px;
+        }
+        .metric-side.right {
+            text-align: right;
+        }
+        .metric-center {
+            display: grid;
+            gap: 6px;
+            align-items: center;
+        }
+        .metric-value {
+            font-size: 12px;
+            color: var(--text);
+        }
+        .metric-label {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .metric-bar-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            align-items: center;
+        }
+        .metric-half {
+            height: 8px;
+            border-radius: 999px;
+            background: #0f141b;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+        }
+        .metric-half.left {
+            justify-content: flex-end;
+        }
+        .metric-half.right {
+            justify-content: flex-start;
+        }
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(120deg, #4fd1c5, #22c55e);
+        }
+        .mistake-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--muted);
+            padding: 6px 0 0;
+        }
+        .distribution-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
+            margin-top: 12px;
         }
-        .row {
+        .dist-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px;
-            align-items: end;
-        }
-        .score-panel {
-            display: grid;
-            gap: 6px;
+            grid-template-columns: 1fr 110px 1fr;
+            gap: 8px;
+            align-items: center;
             font-size: 12px;
+            margin-bottom: 8px;
         }
-        .score-note {
-            font-size: 10px;
-            color: var(--muted);
-        }
-        .score-line {
+        .dist-bar {
+            height: 8px;
+            border-radius: 999px;
+            background: #0f141b;
+            border: 1px solid var(--border);
+            overflow: hidden;
             display: flex;
-            justify-content: space-between;
+        }
+        .dist-bar.left {
+            justify-content: flex-end;
+        }
+        .dist-bar.right {
+            justify-content: flex-start;
+        }
+        .dist-fill {
+            height: 100%;
+        }
+        .dist-label {
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
             color: var(--muted);
         }
-        .score-line span {
-            color: var(--text);
-            font-weight: 600;
+        .profile-card {
+            grid-column: span 12;
+            display: grid;
+            gap: 16px;
         }
-        #log { display: none; }
-        .quality-table {
+        .profile-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
+            gap: 16px;
+            align-items: start;
+        }
+        .profile-left {
             display: grid;
             gap: 12px;
         }
-        .quality-section {
-            border: 1px solid #273040;
-            border-radius: 10px;
-            padding: 10px;
+        .profile-right {
             display: grid;
-            gap: 8px;
-            background: #0f1115;
+            gap: 10px;
+            justify-items: end;
         }
-        .quality-threshold {
+        .profile-header {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+            background-size: cover;
+            background-position: center;
+        }
+        .profile-name {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .profile-meta {
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .stat-card {
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+        }
+        .stat-card span {
+            display: block;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        .tables-panel {
+            grid-column: span 7;
+            display: grid;
+            gap: 16px;
+        }
+        .games-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+        .games-table {
+            overflow: auto;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+        .report-games-row {
+            grid-column: span 12;
+            display: flex;
+            gap: 18px;
+            align-items: stretch;
+        }
+        .report-games-row .tables-panel {
+            flex: 0 1 680px;
+            min-width: 0;
+            max-width: 680px;
+        }
+        .report-games-row .games-panel {
+            flex: 1 1 0;
+            min-width: 260px;
+        }
+        .viewer-panel {
+            grid-column: span 5;
+            display: grid;
+            gap: 16px;
+        }
+        .viewer-grid {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+        .board-wrap {
+            height: calc(var(--board-height) - 32px);
+            min-height: 420px;
+            aspect-ratio: 552 / 625;
+            width: min(100%, calc(var(--board-height) * 552 / 625));
+            margin: 16px;
+        }
+        .viewer-grid .board-wrap {
+            max-width: 100%;
+        }
+        .board-wrap .besogo-viewer,
+        .board-wrap .besogo-container,
+        .board-wrap .besogo-board {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        @media (max-width: 1100px) {
+            .col-user, .col-date, .col-analysis, .col-name, .col-hc, .col-size, .col-result { display: none; }
+        }
+        @media (max-width: 900px) {
+            .col-user, .col-date, .col-analysis, .col-name, .col-hc, .col-size, .col-result { display: none; }
+        }
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+        th {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+        }
+        .pill.success { color: var(--success); }
+        .pill.danger { color: var(--danger); }
+        .status {
             font-size: 12px;
+            color: var(--muted);
+        }
+        .report-block {
+            display: grid;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 12px;
+            background: var(--panel-strong);
+            border: 1px solid var(--border);
+        }
+        .report-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .viewer-meta {
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .analysis-panel {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            max-width: min(100%, calc(var(--board-height) * 552 / 625));
+        }
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--panel-strong);
             color: var(--text);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+            color: #1c1306;
+            border: none;
+        }
+        .quality-rows {
+            display: grid;
+            gap: 10px;
+        }
+        .quality-row {
+            display: grid;
+            gap: 6px;
         }
         .quality-line {
             display: grid;
-            grid-template-columns: 56px 1fr 64px;
-            gap: 10px;
+            grid-template-columns: 48px 300px 40px;
+            gap: 8px;
             align-items: center;
+            font-size: 12px;
         }
-        .quality-side {
-            font-size: 11px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-        .quality-bar {
-            height: 12px;
+        .quality-line .bar {
+            height: 8px;
             border-radius: 999px;
+            background: #0f141b;
+            border: 1px solid var(--border);
             overflow: hidden;
-            background: #0b0d12;
-            border: 1px solid #273040;
         }
-        .quality-fill {
+        .quality-line .fill {
             height: 100%;
         }
-        .quality-count {
-            font-size: 11px;
+        .current-move {
+            display: grid;
+            gap: 6px;
+            font-size: 12px;
             color: var(--muted);
-            text-align: right;
+        }
+        .current-move span {
+            color: var(--text);
+            font-weight: 600;
+        }
+        @media (max-width: 1100px) {
+            .tables-panel, .games-panel, .viewer-panel { grid-column: span 12; }
+            .report-games-row { flex-direction: column; }
+            .board-wrap { max-height: 480px; }
+            .viewer-grid { flex-direction: column; }
         }
     </style>
     <script src="besogo/js/besogo.js"></script>
@@ -233,55 +622,127 @@
     <script src="besogo/js/filePanel.js"></script>
     <script src="besogo/js/namesPanel.js"></script>
 </head>
-<body onload="besogo.autoInit()">
-    <header>
-        <h1>OGS Analyzer</h1>
-        <div style="color: var(--muted); font-size: 13px;">Paste an OGS game URL. We’ll pull review info and stream moves.</div>
-    </header>
-    <div class="center-wrap">
-    <main class="container">
-        <section class="panel board-panel">
-            <h2>Board</h2>
-            <div class="board-wrap">
-                <div
-                    class="besogo-viewer"
-                    resize="fixed"
-                    panels="control+names"
-                    sgf="https://raw.githubusercontent.com/gogameguru/commented-go-games/master/2016/05/20160309-Lee-Sedol-vs-AlphaGo-Commentary-An-Younggil.sgf"
-                ></div>
+<body>
+    <section id="homeView" class="view active">
+        <header>
+            <div class="title-block">
+                <div class="eyebrow">OGS Player Profile</div>
+                <h1>AI Performance Overview</h1>
             </div>
-        </section>
-        <section class="panel analyzer-panel">
-            <div>
-                <h2>Connection</h2>
-                <div class="form-grid">
+        </header>
+
+        <main>
+            <section class="panel profile-card">
+                <div class="profile-top">
+                    <div class="profile-left">
+                        <div class="profile-header">
+                            <div class="avatar" id="profileAvatar"></div>
+                            <div>
+                                <div class="profile-name" id="profileName">No player loaded</div>
+                                <div class="profile-meta" id="profileMeta">Enter a player URL to begin.</div>
+                            </div>
+                        </div>
+                        <div class="controls profile-controls">
+                            <div class="control-row compact">
+                                <label for="playerInput">Player URL or ID</label>
+                                <input id="playerInput" placeholder="https://online-go.com/user/view/842267 or 842267">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-right">
+                        <div class="controls profile-controls">
+                            <div class="control-row">
+                                <label>Include games</label>
+                                <div class="checkbox-row">
+                                    <label><input type="checkbox" id="filterRanked" checked> Ranked</label>
+                                    <label><input type="checkbox" id="filterFree" checked> Free</label>
+                                </div>
+                            </div>
+                            <div class="control-row compact">
+                                <button id="loadPlayer">Load</button>
+                            </div>
+                            <div class="control-row compact">
+                                <button class="secondary" id="clearSession">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-grid" id="profileStats"></div>
+                <div class="status" id="status">Waiting for input.</div>
+            </section>
+
+            <div class="report-games-row">
+                <section class="panel tables-panel">
+                    <h2>Analysis Report</h2>
+                    <div class="analysis-summary" id="analysisSummary"></div>
+                    <div id="phaseReport"></div>
+                    <div class="distribution-grid">
+                        <div>
+                            <h2>Score Loss Distribution</h2>
+                            <div id="scoreDistribution"></div>
+                        </div>
+                        <div>
+                            <h2>Winrate Loss Distribution</h2>
+                            <div id="winrateDistribution"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel games-panel">
+                    <h2>Games</h2>
+                    <div class="status" id="gamesStatus"></div>
+                    <div class="games-table" id="gamesTable"></div>
+                </section>
+            </div>
+
+        </main>
+    </section>
+
+    <section id="viewerView" class="view">
+        <header class="viewer-header-compact">
+            <div class="viewer-title">Game Viewer</div>
+            <button id="backToHome" class="secondary">Back</button>
+        </header>
+        <main class="viewer-main">
+            <section class="panel viewer-panel viewer-full">
+                <div class="viewer-header">
                     <div>
-                        <label for="gameUrl">OGS Game URL</label>
-                        <input id="gameUrl" placeholder="https://online-go.com/game/80686176">
+                        <div class="profile-name" id="viewerGameTitle">No game loaded</div>
+                        <div class="viewer-meta" id="viewerGameMeta">Select a game from the profile list.</div>
                     </div>
-                    <div class="row">
-                        <button id="connect">Analyze</button>
+                    <div class="pill" id="viewerGameResult">--</div>
+                </div>
+                <div class="viewer-grid viewer-fill" style="margin-top: 16px;">
+                    <div class="board-wrap">
+                        <div
+                            class="besogo-viewer"
+                            resize="fixed"
+                            panels="control+names"
+                            sgf="https://raw.githubusercontent.com/gogameguru/commented-go-games/master/2016/05/20160309-Lee-Sedol-vs-AlphaGo-Commentary-An-Younggil.sgf"
+                        ></div>
+                    </div>
+                    <div class="analysis-panel">
+                        <div class="tab-bar" id="analysisTabs" role="tablist">
+                            <div class="tab active" role="tab" tabindex="0" data-phase="all">ALL</div>
+                            <div class="tab" role="tab" tabindex="-1" data-phase="opening">OPENING</div>
+                            <div class="tab" role="tab" tabindex="-1" data-phase="middle">MIDDLE</div>
+                            <div class="tab" role="tab" tabindex="-1" data-phase="end">END</div>
+                        </div>
+                        <div class="current-move">
+                            <div>Score: <span id="currentScore">--</span></div>
+                            <div>Winrate: <span id="currentWinrate">--</span></div>
+                        </div>
+                        <div>
+                            <h2>Move Quality</h2>
+                            <div class="quality-rows" id="qualityTable"></div>
+                        </div>
+                        <div class="report-grid" id="viewerGameReport"></div>
                     </div>
                 </div>
-                <div id="log"></div>
-            </div>
-            <div>
-                <h2>Current</h2>
-                <div class="score-panel">
-                    <div class="score-note">Black's </div>
-                    <div class="score-line">Score: <span id="currentScore">--</span></div>
-                    <div class="score-line">Winrate: <span id="currentWinrate">--</span></div>
-                </div>
-            </div>
-            <div>
-                <h2>Move Quality</h2>
-                    <div class="quality-table" id="qualityTable">
-                        <div id="qualityRows"></div>
-                    </div>
-            </div>
-        </section>
-    </main>
-    </div>
-    <script src="index.js" type="module"></script>
+            </section>
+        </main>
+    </section>
+
+    <script src="src/app.js" type="module"></script>
 </body>
 </html>
